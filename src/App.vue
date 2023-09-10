@@ -1,7 +1,7 @@
 <template>
 
   <div class="p-20">
-     <slider class="w-80" v-model="slider1" :min="1" :max="100" :step="1" type="float1" unit="px" />
+<!--     <slider class="w-80" v-model="slider1" :min="1" :max="100" :step="1" type="float1" unit="px" />-->
 
     <!-- 
       Proposed: mode="DOUBLE", props are now init and end
@@ -78,7 +78,7 @@
 
 <script setup>
 	import {ref, watch} from 'vue';
-	import Slider from "./old/Slider.vue";
+	// import Slider from "./old/Slider.vue";
 	import SliderSimple from "./slider-simple.vue";
 	import SliderRange from "./slider-range.vue";
 	import SliderSplit from "./slider-split.vue";
