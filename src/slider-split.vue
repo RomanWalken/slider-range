@@ -11,24 +11,37 @@
 				:style="{ left: firstThumbPosition + '%' }"
 				@mousedown="onFirstThumbMouseDown"
 			>
-
-				<span class="tooltip">Tooltip text</span>
+				<div class="tooltip">
+					{{ valueLeftMin }} {{ unit }}
+				</div>
 			</div>
 			<div
 				class="slider-range__thumb slider-range__thumb-pr"
 				:style="{ left: secondThumbPosition + '%' }"
 				@mousedown="onSecondThumbMouseDown"
-			/>
+			>
+				<div class="tooltip">
+					{{ valueLeftMax }} {{ unit }}
+				</div>
+			</div>
 			<div
 				class="slider-range__thumb slider-range__thumb-pl"
 				:style="{ left: thirdThumbPosition + '%' }"
 				@mousedown="onThirdThumbMouseDown"
-			/>
+			>
+				<div class="tooltip">
+					{{ valueRightMin }} {{ unit }}
+				</div>
+			</div>
 			<div
 				class="slider-range__thumb slider-range__thumb-pr"
 				:style="{ left: fourthThumbPosition + '%' }"
 				@mousedown="onFourthThumbMouseDown"
-			/>
+			>
+				<div class="tooltip">
+					{{ valueRightMax }} {{ unit }}
+				</div>
+			</div>
 			<div class="slider-range__thumb-bg" :style="{ left: leftBgRectParams.left, width: leftBgRectParams.width }"></div>
 			<div class="slider-range__thumb-bg" :style="{ left: rightBgRectParams.left, width: rightBgRectParams.width }"></div>
 		</div>
@@ -74,7 +87,7 @@
 <script setup lang="ts">
 import {reactive, ref, watchEffect} from 'vue'
 
-	const {min, max, valueLeftMin, valueLeftMax, valueRightMin, valueRightMax, step, offset, innerLeftOffset, innerRightOffset} = defineProps({
+	const {min, max, valueLeftMin, valueLeftMax, valueRightMin, valueRightMax, step, offset, innerLeftOffset, innerRightOffset, show, orientation, disabled, unit} = defineProps({
 		valueLeftMin: { type: Number, default: 30 },
 		valueLeftMax: { type: Number, default: 70 },
 		valueRightMin: { type: Number, default: 90 },
@@ -84,7 +97,12 @@ import {reactive, ref, watchEffect} from 'vue'
 		step: { type: Number, default: 5 },
 		offset: { type: Number, default: 10 }, // Must be definition between valueRightMin & valueLeftMax
 		innerLeftOffset: { type: Number, default: 5 },
-		innerRightOffset: { type: Number, default: 5 }
+		innerRightOffset: { type: Number, default: 5 },
+
+		show: { type: Boolean, default: true },
+		orientation: { type: String, default: 'horizontal' },
+		disabled: { type: Boolean, default: false },
+		unit: { type: String, default: '' }
 	})
 
 	const emits = defineEmits()
@@ -285,9 +303,9 @@ import {reactive, ref, watchEffect} from 'vue'
 	}
 
 	.slider-range__thumb-pr {
-		border-top: 2px solid #00A04F;
-		border-right: 2px solid #00A04F;
-		border-bottom: 2px solid #00A04F;
+		border-top: var(--thumb-border);
+		border-right: var(--thumb-border);
+		border-bottom: var(--thumb-border);
 		border-top-right-radius: 20px;
 		border-bottom-right-radius: 20px;
 	}
@@ -296,33 +314,4 @@ import {reactive, ref, watchEffect} from 'vue'
 		position:absolute;
 		clip:rect(0,0,0,0);
 	}
-</style>
-
-<style>
-.tooltip {
-	position: absolute;
-	top: -100%;
-	transform: translate(-50%, -75%);
-	z-index: 1000;
-
-	visibility: hidden;
-	opacity: 0;
-	width: 120px;
-	background-color: black;
-	color: #fff;
-	text-align: center;
-	padding: 5px 0;
-	border-radius: 6px;
-	transition: opacity .3s;
-	pointer-events: none !important;
-}
-
-/* Show the tooltip text when you mouse over the tooltip container */
-.slider-range__thumb:hover .tooltip,
-.slider-range__thumb:active .tooltip,
-.slider-range__thumb:focus .tooltip
-{
-	visibility: visible;
-	opacity: 1;
-}
 </style>

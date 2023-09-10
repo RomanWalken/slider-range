@@ -3,9 +3,25 @@
 		<div class="slider-simple" ref="sliderSimple">
 			<div class="slider-simple__track">
 				<div class="slider-simple__range" :style="{ width: `${thumbPosition}%`}"></div>
-				<div class="slider-simple__thumb" :style="{ left: `${thumbPosition}%` }"></div>
+				<div
+					class="slider-simple__thumb"
+					:style="{ left: `${thumbPosition}%` }"
+					@mousedown="onThumbMouseDown"
+				>
+					<div class="tooltip">
+						{{ value }} {{ unit }}
+					</div>
+				</div>
 			</div>
-			<input type="range" :value="value" :min="min" :max="max" :step="step" @input="updateValue" /> <!-- v-model="thumbValue" -->
+			<input
+				type="range"
+				:value="value"
+				:min="min"
+				:max="max"
+				:step="step"
+				@input="updateThumbValue($event.target.value)"
+				class="visually-hidden"
+			/>
 		</div>
 	</div>
 </template>
@@ -35,10 +51,12 @@
 
 	const thumbWidth = 19
 
-	const updateValue = (event) => {
-		let newValue: number = Number(event.target.value)
-		thumbValue.value = newValue
-		emit('update:value', newValue);
+	const updateThumbValue = (value: number) => {
+		let newValue: number = value
+		if(newValue >= min && newValue <= max) {
+			thumbValue.value = Math.round(newValue / step) * step
+			emit('update:value', thumbValue.value);
+		}
 	}
 
 	watchEffect(() => {
@@ -52,11 +70,27 @@
 					position = (thumbWidthPercent * way) / 100
 
 				thumbPosition.value = way - position
-			} else {
-
-			}
+			} else {}
 		}
 	})
+
+	const onThumbMouseDown = () => {
+		// activeThumb.value = 'thumb1'
+		window.addEventListener('mousemove', onMouseMove)
+		window.addEventListener('mouseup', onMouseUp)
+	}
+
+	const onMouseMove = (event) => {
+		const trackRect = document.querySelector('.slider-range__track').getBoundingClientRect()
+		const mousePosition = event.clientX - trackRect.left
+		const mouseValue = ((mousePosition / trackRect.width) * (max - min)) + min
+		updateThumbValue(mouseValue)
+	}
+
+	const onMouseUp = () => {
+		window.removeEventListener('mousemove', onMouseMove)
+	}
+
 </script>
 
 <style scoped>
@@ -86,11 +120,16 @@
 
 .slider-simple__thumb {
 	position: absolute;
-	top:-7px;
+	top: -7px;
 	width: 19px;
 	height: 19px;
 	border-radius:50%;
-	border: 2px solid #00A04F;
+	border: var(--thumb-border);
 	background-color: #fff;
+}
+
+.visually-hidden{
+	position:absolute;
+	clip:rect(0,0,0,0);
 }
 </style>

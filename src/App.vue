@@ -30,6 +30,8 @@
 				:min="0"
 				:max="100"
 				:step="10"
+
+				unit="usd"
 			/>
 		</div>
 
@@ -48,6 +50,8 @@
 				:min="0"
 				:max="100"
 				:step="5"
+
+				unit="usd"
 			/>
 		</div>
 
@@ -55,9 +59,9 @@
 		<div style="margin-bottom: 90px">
 			<div style="margin-bottom: 15px; display: flex; align-items: start; justify-content: start; flex-direction: column; gap: 15px">
 				<div>Value Left Min: {{ slider3LeftMin }}</div>
-				<div>Value Left Min: {{ slider3LeftMax }}</div>
-				<div>Value Left Min: {{ slider3RightMin }}</div>
-				<div>Value Left Min: {{ slider3RightMax }}</div>
+				<div>Value Left Max: {{ slider3LeftMax }}</div>
+				<div>Value Right Min: {{ slider3RightMin }}</div>
+				<div>Value Right Max: {{ slider3RightMax }}</div>
 			</div>
 			<slider-split
 				v-model:valueLeftMin="slider3LeftMin"
@@ -101,8 +105,14 @@
 	const slider3RightMax = ref(80)
 </script>
 
-<style scoped>
-
+<style>
+* {
+	--thumb-width: 19px;
+	--thumb-height: 19px;
+	--thumb-border-width: 2px;
+	--thumb-border: var(--thumb-border-width) solid #00A04F;
+	--tooltip-bg: #232323;
+}
 </style>
 
 

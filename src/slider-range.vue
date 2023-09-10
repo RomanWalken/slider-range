@@ -10,15 +10,39 @@
 				class="slider-range__thumb slider-range__thumb--left"
 				:style="{ left: firstThumbPosition + '%' }"
 				@mousedown="onFirstThumbMouseDown"
-			/>
+			>
+				<div class="tooltip">
+					{{ valueMin }} {{ unit }}
+				</div>
+			</div>
 			<div
 				class="slider-range__thumb slider-range__thumb--right"
 				:style="{ left: secondThumbPosition + '%' }"
 				@mousedown="onSecondThumbMouseDown"
-			/>
+			>
+				<div class="tooltip">
+					{{ valueMax }} {{ unit }}
+				</div>
+			</div>
 		</div>
-		<input type="range" :value="valueMin" :min="min" :max="valueMax" :step="step" @input="updateThumbMinValue($event.target.value)" class="visually-hidden" />
-		<input type="range" :value="valueMax" :min="valueMin" :max="max" :step="step" @input="updateThumbMaxValue($event.target.value)" class="visually-hidden" />
+		<input
+			type="range"
+			:value="valueMin"
+			:min="min"
+			:max="valueMax"
+			:step="step"
+			@input="updateThumbMinValue($event.target.value)"
+			class="visually-hidden"
+		/>
+		<input
+			type="range"
+			:value="valueMax"
+			:min="valueMin"
+			:max="max"
+			:step="step"
+			@input="updateThumbMaxValue($event.target.value)"
+			class="visually-hidden"
+		/>
 	</div>
 </template>
 
@@ -168,5 +192,50 @@
 .visually-hidden{
 	position:absolute;
 	clip:rect(0,0,0,0);
+}
+</style>
+
+<style setup>
+
+.tooltip {
+	position: absolute;
+	width: auto;
+	padding: 5px 20px;
+	transform: translate(calc((var(--thumb-width) / 2) - var(--thumb-border-width) - 50%), -120%);
+	background-color: var(--tooltip-bg);
+	text-align: center;
+	white-space: nowrap;
+	user-select: none;
+	color: #fff;
+	border-radius: 6px;
+	transition: opacity .3s;
+	pointer-events: none !important;
+	visibility: hidden;
+	opacity: 0;
+	z-index: 1000;
+}
+
+.tooltip::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translate(-50%, 100%);
+	background: transparent;
+	border-left: 5px solid transparent;
+	border-right: 5px solid transparent;
+	border-top: 4px solid var(--tooltip-bg);
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.slider-simple__thumb:hover .tooltip,
+.slider-simple__thumb:active .tooltip,
+.slider-simple__thumb:focus .tooltip,
+.slider-range__thumb:hover .tooltip,
+.slider-range__thumb:active .tooltip,
+.slider-range__thumb:focus .tooltip
+{
+	visibility: visible;
+	opacity: 1;
 }
 </style>
