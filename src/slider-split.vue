@@ -6,12 +6,14 @@
 				:style="{ left: secondThumbPosition + '%', right: 100 - thirdThumbPosition + '%' }"
 				@mousedown="onRangeMouseDown"
 			/>
-
 			<div
 				class="slider-range__thumb slider-range__thumb-pl"
 				:style="{ left: firstThumbPosition + '%' }"
 				@mousedown="onFirstThumbMouseDown"
-			/>
+			>
+
+				<span class="tooltip">Tooltip text</span>
+			</div>
 			<div
 				class="slider-range__thumb slider-range__thumb-pr"
 				:style="{ left: secondThumbPosition + '%' }"
@@ -27,6 +29,8 @@
 				:style="{ left: fourthThumbPosition + '%' }"
 				@mousedown="onFourthThumbMouseDown"
 			/>
+			<div class="slider-range__thumb-bg" :style="{ left: leftBgRectParams.left, width: leftBgRectParams.width }"></div>
+			<div class="slider-range__thumb-bg" :style="{ left: rightBgRectParams.left, width: rightBgRectParams.width }"></div>
 		</div>
 		<input
 			type="range"
@@ -64,12 +68,11 @@
 			@input="updateThumbRightMaxValue($event.target.value)"
 			class="visually-hidden"
 		/>
-
 	</div>
 </template>
 
 <script setup lang="ts">
-	import {ref, watchEffect} from 'vue'
+import {reactive, ref, watchEffect} from 'vue'
 
 	const {min, max, valueLeftMin, valueLeftMax, valueRightMin, valueRightMax, step, offset, innerLeftOffset, innerRightOffset} = defineProps({
 		valueLeftMin: { type: Number, default: 30 },
@@ -86,9 +89,10 @@
 
 	const emits = defineEmits()
 
+	const thumbWidth = 19
+
 	let sliderRange = ref(null),
 		containerWidth = ref(null),
-
 		activeThumb = ref(null),
 		firstThumbPosition = ref(0),
 		secondThumbPosition = ref(0),
@@ -97,158 +101,137 @@
 		thumbLeftMinValue = ref(valueLeftMin),
 		thumbLeftMaxValue = ref(valueLeftMax),
 		thumbRightMinValue = ref(valueRightMin),
-		thumbRightMaxValue = ref(valueRightMax)
+		thumbRightMaxValue = ref(valueRightMax),
+		leftBgRectParams = reactive({
+			left: valueLeftMin + '%',
+			width: (valueLeftMax - valueLeftMin) + '%'
+		}),
+		rightBgRectParams = reactive({
+			left: valueRightMin + '%',
+			width: (valueRightMax - valueRightMin) + '%'
+		})
 
-	const thumbWidth = 19
+	const addEventListeners = (thumb) => {
+		activeThumb.value = thumb;
+		window.addEventListener('mousemove', onMouseMove);
+		window.addEventListener('mouseup', onMouseUp);
+	};
 
-	const updateThumbLeftMinValue = (value) => {
-		let newValue: number = value
+	watchEffect(() => {
+
+		// width: (secondThumbPosition.value - firstThumbPosition.value) + '%'
+
+		console.log(leftBgRectParams)
+		if (sliderRange.value) {
+			containerWidth.value = sliderRange.value.offsetWidth;
+			const thumbWidthPercent = ((thumbWidth / 2) / containerWidth.value) * 100;
+
+			const calculateThumbPosition = (searchedThumbValue) => {
+				const thumbWay = ((searchedThumbValue - min) / (max - min)) * 100;
+				const thumbPosition = (thumbWidthPercent * thumbWay) / 100;
+				return thumbWay - thumbPosition;
+			};
+
+			firstThumbPosition.value = calculateThumbPosition(thumbLeftMinValue.value);
+			secondThumbPosition.value = calculateThumbPosition(thumbLeftMaxValue.value);
+			thirdThumbPosition.value = calculateThumbPosition(thumbRightMinValue.value);
+			fourthThumbPosition.value = calculateThumbPosition(thumbRightMaxValue.value);
+
+			leftBgRectParams.left =	firstThumbPosition.value + '%'
+			leftBgRectParams.width = (secondThumbPosition.value - firstThumbPosition.value) + '%'
+
+			rightBgRectParams.left =	thirdThumbPosition.value + '%'
+			rightBgRectParams.width = (fourthThumbPosition.value - thirdThumbPosition.value) + '%'
+		}
+	})
+
+	const updateThumbLeftMinValue = (value: number) => {
+		let newValue = value
 		if (newValue >= min && newValue < thumbLeftMaxValue.value - innerLeftOffset) {
 			thumbLeftMinValue.value = Math.round(newValue / step) * step
 			emits('update:valueLeftMin', thumbLeftMinValue.value)
 		}
 	}
-
-	const updateThumbLeftMaxValue = (value) => {
-		let newValue: number = value
-		if (newValue > thumbLeftMinValue.value + innerLeftOffset && newValue < thumbRightMinValue.value) {
+	const updateThumbLeftMaxValue = (value: number) => {
+		let newValue = value
+		if (newValue > thumbLeftMinValue.value + innerLeftOffset && newValue < thumbRightMinValue.value && newValue <= thumbRightMinValue.value - offset) {
 			thumbLeftMaxValue.value = Math.round(newValue / step) * step
 			emits('update:valueLeftMax', thumbLeftMaxValue.value)
 		}
 	}
-
-	const updateThumbRightMinValue = (value) => {
-		let newValue: number = value
-		if (newValue > thumbLeftMaxValue.value && newValue < thumbRightMaxValue.value - innerRightOffset) {
-			console.log(newValue)
+	const updateThumbRightMinValue = (value: number) => {
+		let newValue = value
+		if (newValue > thumbLeftMaxValue.value && newValue < thumbRightMaxValue.value - innerRightOffset && newValue >= thumbLeftMaxValue.value + offset) {
 			thumbRightMinValue.value = Math.round(newValue / step) * step
 			emits('update:valueRightMin', thumbRightMinValue.value)
 		}
 	}
-
-	const updateThumbRightMaxValue = (value) => {
-		let newValue: number = value
+	const updateThumbRightMaxValue = (value: number) => {
+		let newValue = value
 		if (newValue > thumbRightMinValue.value + innerRightOffset && newValue <= max) {
 			thumbRightMaxValue.value = Math.round(newValue / step) * step
 			emits('update:valueRightMax', thumbRightMaxValue.value)
 		}
 	}
 
-	watchEffect(() => {
-		if (sliderRange.value) {
-			containerWidth.value = sliderRange.value.offsetWidth
-
-			const thumbWidthPercent = ((thumbWidth / 2) / containerWidth.value) * 100
-
-			let thumbLeftMinWay = ((thumbLeftMinValue.value - min) / (max - min))  * 100,
-				thumbLeftMinPosition = (thumbWidthPercent * thumbLeftMinWay) / 100,
-				thumbLeftMinResult = thumbLeftMinWay - thumbLeftMinPosition
-			console.log(thumbLeftMinResult)
-			firstThumbPosition.value = thumbLeftMinResult
-
-			let thumbLeftMaxWay = ((thumbLeftMaxValue.value - min) / (max - min))  * 100,
-				thumbLeftMaxPosition = (thumbWidthPercent * thumbLeftMaxWay) / 100,
-				thumbLeftMaxResult = thumbLeftMaxWay - thumbLeftMaxPosition
-			console.log(thumbLeftMaxResult)
-			secondThumbPosition.value = thumbLeftMaxResult
-
-			let thumbRightMinWay = ((thumbRightMinValue.value - min) / (max - min))  * 100,
-				thumbRightMinPosition = (thumbWidthPercent * thumbRightMinWay) / 100,
-				thumbRightMinResult = thumbRightMinWay - thumbRightMinPosition
-			console.log(thumbRightMinResult)
-			thirdThumbPosition.value = thumbRightMinResult
-
-			let thumbRightMaxWay = ((thumbRightMaxValue.value - min) / (max - min))  * 100,
-				thumbRightMaxPosition = (thumbWidthPercent * thumbRightMaxWay) / 100,
-				thumbRightMaxResult = thumbRightMaxWay - thumbRightMaxPosition
-			console.log(thumbRightMaxResult)
-			fourthThumbPosition.value = thumbRightMaxResult
-		}
-	})
-
-	const onFirstThumbMouseDown = () => {
-		activeThumb.value = 'thumb1'
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', onMouseUp)
-	}
-
-	const onSecondThumbMouseDown = () => {
-		activeThumb.value = 'thumb2'
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', onMouseUp)
-	}
-
-	const onThirdThumbMouseDown = () => {
-		activeThumb.value = 'thumb3'
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', onMouseUp)
-	}
-
-	const onFourthThumbMouseDown = () => {
-		activeThumb.value = 'thumb4'
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', onMouseUp)
-	}
-
-	const onRangeMouseDown = () => {
-		activeThumb.value = 'range'
-		window.addEventListener('mousemove', onMouseMove)
-		window.addEventListener('mouseup', onMouseUp)
-	}
-
-	let test = ref(null)
+	const onFirstThumbMouseDown = () => addEventListeners('thumb1');
+	const onSecondThumbMouseDown = () => addEventListeners('thumb2');
+	const onThirdThumbMouseDown = () => addEventListeners('thumb3');
+	const onFourthThumbMouseDown = () => addEventListeners('thumb4');
+	const onRangeMouseDown = () => addEventListeners('range');
 
 	const onMouseMove = (event) => {
-		const trackRect = document.querySelector('.slider-range__track').getBoundingClientRect()
-		const mousePosition = event.clientX - trackRect.left
-		const mouseValue = ((mousePosition / trackRect.width) * (max - min)) + min
+		const trackRect = document.querySelector('.slider-range__track').getBoundingClientRect();
+		const mousePosition = event.clientX - trackRect.left;
+		const mouseValue = ((mousePosition / trackRect.width) * (max - min)) + min;
 
-		if (activeThumb.value === 'thumb1') {
-			updateThumbLeftMinValue(mouseValue)
-		} else if (activeThumb.value === 'thumb2') {
-			updateThumbLeftMaxValue(mouseValue)
-		} else if(activeThumb.value === 'thumb3') {
-			updateThumbRightMinValue(mouseValue)
-		} else if(activeThumb.value === 'thumb4') {
-			updateThumbRightMaxValue(mouseValue)
-		} else if (activeThumb.value === 'range') {
-			const mainRangeWidth = thumbRightMinValue.value - thumbLeftMaxValue.value
-			const leftRangeWidth = thumbLeftMaxValue.value - thumbLeftMinValue.value
-			const rightRangeWidth = thumbRightMaxValue.value - thumbRightMinValue.value
+		switch (activeThumb.value) {
+			case 'thumb1':
+				updateThumbLeftMinValue(mouseValue);
+				break;
+			case 'thumb2':
+				updateThumbLeftMaxValue(mouseValue);
+				break;
+			case 'thumb3':
+				updateThumbRightMinValue(mouseValue);
+				break;
+			case 'thumb4':
+				updateThumbRightMaxValue(mouseValue);
+				break;
+			case 'range':
+				const mainRangeWidth = thumbRightMinValue.value - thumbLeftMaxValue.value;
+				const leftRangeWidth = thumbLeftMaxValue.value - thumbLeftMinValue.value;
+				const rightRangeWidth = thumbRightMaxValue.value - thumbRightMinValue.value;
 
-			let newValue1,
-				newValue2 = mouseValue - mainRangeWidth / 2,
-				newValue3 = mouseValue + mainRangeWidth / 2,
-				newValue4
+				let newValue1,
+					newValue2 = mouseValue - (mainRangeWidth / 2),
+					newValue3 = mouseValue + (mainRangeWidth / 2),
+					newValue4;
 
-			newValue1 = newValue2 - leftRangeWidth
-			newValue4 = newValue3 + rightRangeWidth
+				newValue1 = newValue2 - leftRangeWidth;
+				newValue4 = newValue3 + rightRangeWidth;
 
-			if (newValue1 < min) {
-				newValue1 = min
-				newValue2 = newValue1 + leftRangeWidth
-				newValue3 = newValue2 + mainRangeWidth
-				newValue4 = newValue3 + rightRangeWidth
-			}
+				if (newValue1 < min) {
+					newValue1 = min;
+					newValue2 = newValue1 + leftRangeWidth;
+					newValue3 = newValue2 + mainRangeWidth;
+					newValue4 = newValue3 + rightRangeWidth;
+				}
 
-			if (newValue4 > max) {
-				newValue4 = max
-				newValue3 = newValue4 - rightRangeWidth
-				newValue2 = newValue3 - mainRangeWidth
-				newValue1 = newValue2 - leftRangeWidth
-			}
+				if (newValue4 > max) {
+					newValue4 = max;
+					newValue3 = newValue4 - rightRangeWidth;
+					newValue2 = newValue3 - mainRangeWidth;
+					newValue1 = newValue2 - leftRangeWidth;
+				}
 
-			test.value = leftRangeWidth
-
-			updateThumbLeftMinValue(newValue1)
-			updateThumbLeftMaxValue(newValue2)
-			updateThumbRightMinValue(newValue3)
-			updateThumbRightMaxValue(newValue4)
+				updateThumbLeftMinValue(newValue1);
+				updateThumbLeftMaxValue(newValue2);
+				updateThumbRightMinValue(newValue3);
+				updateThumbRightMaxValue(newValue4);
+				break;
 		}
-	}
-
-	console.log(test.value)
-
+	};
 	const onMouseUp = () => {
 		activeThumb.value = null
 		window.removeEventListener('mousemove', onMouseMove)
@@ -276,6 +259,7 @@
 		width: calc(19px / 2);
 		height:19px;
 		background: #fff;
+		z-index: 5;
 	}
 
 	.slider-range__thumb-pl {
@@ -284,6 +268,20 @@
 		border-bottom: 2px solid #00A04F;
 		border-top-left-radius: 20px;
 		border-bottom-left-radius: 20px;
+	}
+
+	.slider-range__thumb-bg {
+		position: absolute;
+		top: calc(-19px / 2);
+		top: -7px;
+		background: red;
+		height: 19px;
+		border-top-left-radius: 30px;
+		border-bottom-left-radius: 30px;
+		background: #ffffff;
+		border-top: 2px solid #B3B8BB;
+		border-bottom: 2px solid #B3B8BB;
+		z-index: 1;
 	}
 
 	.slider-range__thumb-pr {
@@ -298,4 +296,33 @@
 		position:absolute;
 		clip:rect(0,0,0,0);
 	}
+</style>
+
+<style>
+.tooltip {
+	position: absolute;
+	top: -100%;
+	transform: translate(-50%, -75%);
+	z-index: 1000;
+
+	visibility: hidden;
+	opacity: 0;
+	width: 120px;
+	background-color: black;
+	color: #fff;
+	text-align: center;
+	padding: 5px 0;
+	border-radius: 6px;
+	transition: opacity .3s;
+	pointer-events: none !important;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.slider-range__thumb:hover .tooltip,
+.slider-range__thumb:active .tooltip,
+.slider-range__thumb:focus .tooltip
+{
+	visibility: visible;
+	opacity: 1;
+}
 </style>
