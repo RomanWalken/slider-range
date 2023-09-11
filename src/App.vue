@@ -15,7 +15,7 @@
 
     <!-- <slider class="h-80" v-model="slider1" :min=1 :max="10" :step=0.001 type="float2" orientation="VERTICAL-INVERTED" /> -->
 
-	<div style="width: 400px">
+	<div style="width: 100%; max-width: 400px; height: auto; margin: 0 auto; padding: 90px 30px">
 		<div style="margin-bottom: 90px">
 			<div style="margin-bottom: 15px">
 				<div>
