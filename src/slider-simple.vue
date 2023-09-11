@@ -76,14 +76,20 @@
 
 	const onThumbMouseDown = () => {
 		// activeThumb.value = 'thumb1'
+
+		console.log('qwe')
 		window.addEventListener('mousemove', onMouseMove)
 		window.addEventListener('mouseup', onMouseUp)
+		window.addEventListener('touchmove', onMouseMove)
+		window.addEventListener('touchend', onMouseUp)
 	}
 
 	const onMouseMove = (event) => {
 		const trackRect = document.querySelector('.slider-range__track').getBoundingClientRect()
-		const mousePosition = event.clientX - trackRect.left
+		console.log(event.touches)
+		const mousePosition = (event.touches ? event.touches[0].clientX : event.clientX) - trackRect.left
 		const mouseValue = ((mousePosition / trackRect.width) * (max - min)) + min
+
 		updateThumbValue(mouseValue)
 	}
 
